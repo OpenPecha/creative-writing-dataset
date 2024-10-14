@@ -12,7 +12,14 @@ def count_syllables(text):
 def process_text(text):
     lines = re.split(r'\s+', text.strip())
 
-    syllable_counts = [count_syllables(line) for line in lines if count_syllables(line) is not None]
+    total_syllable_count = 0
+    syllable_counts = []
+    
+    for line in lines:
+        count = count_syllables(line)
+        if count is not None:
+            syllable_counts.append(count)
+            total_syllable_count += count
 
     if len(syllable_counts) > 0:
         most_common_count = max(set(syllable_counts), key=syllable_counts.count)
@@ -23,7 +30,7 @@ def process_text(text):
 
     is_consistent = consistency >= 0.8
     return {
-        "syllable_count": syllable_counts,
+        "syllable_count": total_syllable_count,
         "line_count": len(syllable_counts),
         "structured": is_consistent
     }
@@ -42,8 +49,8 @@ def process_json(input_file, output_file):
         output_entry = {
             "tags": tags,
             "text": text,
-            "syllable": text_info["syllable_count"],
-            "line": text_info["line_count"],
+            "syllable_count": text_info["syllable_count"],
+            "line_count": text_info["line_count"],
             "structured": text_info["structured"]
         }
         output_data.append(output_entry)

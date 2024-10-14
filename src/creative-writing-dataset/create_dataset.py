@@ -52,6 +52,6 @@ def main(input_json_path, output_dir):
     process_json(input_json_path, keywords, output_dir)
 
 if __name__ == "__main__":
-    input_json_path = 'data/creative_writing.json' 
+    input_json_path = 'data/input_creative_data/deduplicate_creative_writing.json' 
     output_dir = 'data/creative_dataset_output_json'   
     main(input_json_path, output_dir)
