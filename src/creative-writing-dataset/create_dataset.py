@@ -2,6 +2,7 @@ import json
 import os
 import re
 
+
 def load_json(file_path):
     with open(file_path, 'r', encoding='utf-8') as infile:
         return json.load(infile)
@@ -25,7 +26,8 @@ def filter_data_by_keyword(data, keyword, additional_keywords=None, priority_key
     if priority_keyword:
         return [
             entry for entry in data if tag_contains_keywords(entry['tags'], [priority_keyword]) or
-            (tag_contains_keywords(entry['tags'], keywords_to_match) and not tag_contains_keywords(entry['tags'], [priority_keyword]))
+            (tag_contains_keywords(entry['tags'], keywords_to_match)
+             and not tag_contains_keywords(entry['tags'], [priority_keyword]))
         ]
     return [entry for entry in data if tag_contains_keywords(entry['tags'], keywords_to_match)]
 
@@ -52,7 +54,7 @@ def process_poems(text):
 
     total_syllable_count = 0
     syllable_counts = []
-    
+
     for line in lines:
         count = count_syllables(line)
         if count is not None:
@@ -70,31 +72,35 @@ def process_poems(text):
     return {
         "syllable_count": total_syllable_count,
         "line_count": len(syllable_counts),
-        "structured": is_consistent
+        "structured": is_consistent,
+        "average_syllables_per_line": most_common_count
     }
 
 
 def process_json(input_json_path, keywords, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     data = load_json(input_json_path)
-    
+
     data = remove_empty_text_entries(data)
     classified_entries = []
 
     keyword_config = {
         "རྩོམ": {
             "priority_keyword": "སྙན་ངག",
-            "additional_keywords": ["opinions", "Opinions", "བསམ་ཚུལ", "གཏམ་དཔེ"]
+            "additional_keywords": ["opinions", "Opinions", "བསམ་ཚུལ", "གཏམ་དཔེ", "སྣ་ཚོགས།", "ངོ་སྤྲོད།"]
         },
         "གསར་འགྱུར།": {
-            "additional_keywords": ["news", "News", "བོད་ནང་", "གོང་ས་མཆོག", "རྒྱ་ནག", "བཙན་བྱོལ"]
+            "additional_keywords": ["news", "News", "བོད་ནང་", "གོང་ས་མཆོག", "རྒྱ་ནག", "བཙན་བྱོལ།", "འཕྲིན་གསར", "རྒྱ་དཀར་ནག",  "འཛམ་གླིང་།", "སྤྱི་ཚོགས།", "བརྒྱུད་ལམ་གཞན་གྱི་གསར་གནས།", "ཨ་རི།"]
         },
         "མགུར་གླུ།": {
             "additional_keywords": ["གླུ་གཞས།"]
         },
         "ཡིག་སྒྲེལ་": {
-            "additional_keywords": ["ངོས་སྦྱོར་"]
-        }
+            "additional_keywords": ["ངོས་སྦྱོར་", "འཕྲིན་ཡིག"]
+        },
+        "བརྩམས་སྒྲུང": {
+            "additional_keywords": ["མཚར་གཏམ།"]
+        },
     }
 
     for keyword in keywords:
@@ -108,16 +114,16 @@ def process_json(input_json_path, keywords, output_dir):
 
         if filtered_data:
             if keyword == "སྙན་ངག":
-                structured_output_file = os.path.join(output_dir, f"{keyword}_structured.json")
+                structured_output_file = os.path.join(output_dir, f"{keyword}.json")
                 process_syllable_structure(filtered_data, structured_output_file)
             else:
-               
+
                 output_file_path = os.path.join(output_dir, f"{keyword}.json")
                 save_json(filtered_data, output_file_path)
-            
+
             classified_entries.extend(filtered_data)
 
-    #unclassified entries
+    # unclassified entries
     unclassified_data = filter_unclassified_data(data, classified_entries)
     if unclassified_data:
         unclassified_file_path = os.path.join(output_dir, 'unclassified.json')
@@ -136,7 +142,8 @@ def process_syllable_structure(data, output_file):
             "text": text,
             "syllable_count": text_info["syllable_count"],
             "line_count": text_info["line_count"],
-            "structured": text_info["structured"]
+            "structured": text_info["structured"],
+            "average_syllable": text_info["average_syllables_per_line"]
         }
         output_data.append(output_entry)
 
