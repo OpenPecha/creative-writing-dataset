@@ -1,7 +1,6 @@
 import json
 import re
 
-
 def count_syllables(text):
     clean_text = re.sub(r'[།༎༏༐༑༔]+', '', text)
     syllables = clean_text.split('་')
@@ -60,5 +59,5 @@ def process_json(input_file, output_file):
 
 
 input_file = 'data/creative_dataset_output_json/སྙན་ངག.json'
-output_file = 'data/creative_dataset_output_json/སྙན་ངག_structured_output.json'
+output_file = 'data/creative_dataset_output_json/སྙན་ངག_structured.json'
 process_json(input_file, output_file)

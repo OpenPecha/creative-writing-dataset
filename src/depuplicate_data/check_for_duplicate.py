@@ -19,4 +19,4 @@ def check_duplicate_texts(json_file_path):
         for text, count in duplicates.items():
             print(f"text: {text}\nCount: {count}\n")
 
-check_duplicate_texts('data/input_creative_data/deduplicate_creative_writing.json')
+check_duplicate_texts('data/input_creative_data/creative_writing.json')

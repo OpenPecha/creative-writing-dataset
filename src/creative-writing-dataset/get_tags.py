@@ -23,6 +23,6 @@ def extract_unique_strings_in_tags(input_file, output_file):
     print(f"unique strings in tags: {len(unique_strings)}")
 
 
-input_json_file = 'data/input_creative_data/deduplicate_creative_writing.json'
-output_json_file = 'data/all_tags/all_unique_strings.json'
+input_json_file = 'data/creative_dataset_output_json/unclassified.json'
+output_json_file = 'data/all_tags/all_unique_unclassified_strings.json'
 extract_unique_strings_in_tags(input_json_file, output_json_file)
