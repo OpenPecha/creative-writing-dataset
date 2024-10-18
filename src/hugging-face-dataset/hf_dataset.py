@@ -9,7 +9,7 @@ def load_json(file_path):
 def create_dataset(data):
     return Dataset.from_list(data)
 
-def save_dataset_locally(dataset, save_path, format='arrow'):
+def save_dataset_locally(dataset, save_path, format='parquet'):
     if format == 'arrow':
         dataset.save_to_disk(save_path)
     elif format == 'parquet':
@@ -25,7 +25,7 @@ def upload_dataset(dataset, repo_id):
     print(f"Dataset uploaded successfully to '{repo_id}'.")
 
 def main(save_to_disk=False, disk_format='arrow'):
-    json_file_path = 'data/creative_dataset_output_json/སྙན་ངག_structured.json'
+    json_file_path = 'data/creative_dataset_output_json/སྙན་ངག.json'
     dataset_name = 'tibetan-poems'  
     repo_id = f'tenkal/{dataset_name}' 
     data = load_json(json_file_path)
@@ -41,4 +41,4 @@ def main(save_to_disk=False, disk_format='arrow'):
 
 if __name__ == '__main__':
 
-    main(save_to_disk=True, disk_format='parquet')
+    main(save_to_disk=False, disk_format='parquet')

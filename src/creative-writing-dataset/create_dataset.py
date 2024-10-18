@@ -1,6 +1,11 @@
 import json
 import os
 import re
+import unicodedata
+
+
+def normalize_text(text):
+    return unicodedata.normalize('NFC', text.strip())
 
 
 def load_json(file_path):
@@ -13,23 +18,32 @@ def remove_empty_text_entries(data):
 
 
 def filter_data_by_keyword(data, keyword, additional_keywords=None, priority_keyword=None):
-    """
-    Filters data by keyword. If priority_keyword is provided, it ensures that
-    entries containing the priority_keyword are classified under it.
-    Supports additional keywords for matching.
-    """
-    keywords_to_match = [keyword] + (additional_keywords or [])
+    keyword = normalize_text(keyword)
+    keywords_to_match = [keyword] + [normalize_text(kw) for kw in (additional_keywords or [])]
 
     def tag_contains_keywords(tags, kw_list):
-        return any(kw in tag for kw in kw_list for tag in tags)
+        if not tags:
+            return False
+        for tag in tags:
+            normalized_tag = normalize_text(tag)
+            for kw in kw_list:
+                if kw in normalized_tag:
+                    return True
+        return False
 
     if priority_keyword:
+        priority_keyword = normalize_text(priority_keyword)
         return [
-            entry for entry in data if tag_contains_keywords(entry['tags'], [priority_keyword]) or
+            entry for entry in data
+            if (not entry['tags'] and keyword == "གསར་འགྱུར།") or
+            tag_contains_keywords(entry['tags'], [priority_keyword]) or
             (tag_contains_keywords(entry['tags'], keywords_to_match)
-             and not tag_contains_keywords(entry['tags'], [priority_keyword]))
+                and not tag_contains_keywords(entry['tags'], [priority_keyword]))
         ]
-    return [entry for entry in data if tag_contains_keywords(entry['tags'], keywords_to_match)]
+
+    return [entry for entry in data
+            if (not entry['tags'] and keyword == "གསར་འགྱུར།") or
+            tag_contains_keywords(entry['tags'], keywords_to_match)]
 
 
 def filter_unclassified_data(data, classified_entries):
@@ -51,7 +65,6 @@ def count_syllables(text):
 
 def process_poems(text):
     lines = re.split(r'\s+', text.strip())
-
     total_syllable_count = 0
     syllable_counts = []
 
@@ -77,59 +90,6 @@ def process_poems(text):
     }
 
 
-def process_json(input_json_path, keywords, output_dir):
-    os.makedirs(output_dir, exist_ok=True)
-    data = load_json(input_json_path)
-
-    data = remove_empty_text_entries(data)
-    classified_entries = []
-
-    keyword_config = {
-        "རྩོམ": {
-            "priority_keyword": "སྙན་ངག",
-            "additional_keywords": ["opinions", "Opinions", "བསམ་ཚུལ", "གཏམ་དཔེ", "སྣ་ཚོགས།", "ངོ་སྤྲོད།"]
-        },
-        "གསར་འགྱུར།": {
-            "additional_keywords": ["news", "News", "བོད་ནང་", "གོང་ས་མཆོག", "རྒྱ་ནག", "བཙན་བྱོལ།", "འཕྲིན་གསར", "རྒྱ་དཀར་ནག",  "འཛམ་གླིང་།", "སྤྱི་ཚོགས།", "བརྒྱུད་ལམ་གཞན་གྱི་གསར་གནས།", "ཨ་རི།"]
-        },
-        "མགུར་གླུ།": {
-            "additional_keywords": ["གླུ་གཞས།"]
-        },
-        "ཡིག་སྒྲེལ་": {
-            "additional_keywords": ["ངོས་སྦྱོར་", "འཕྲིན་ཡིག"]
-        },
-        "བརྩམས་སྒྲུང": {
-            "additional_keywords": ["མཚར་གཏམ།"]
-        },
-    }
-
-    for keyword in keywords:
-        config = keyword_config.get(keyword, {})
-        filtered_data = filter_data_by_keyword(
-            data,
-            keyword,
-            additional_keywords=config.get("additional_keywords"),
-            priority_keyword=config.get("priority_keyword")
-        )
-
-        if filtered_data:
-            if keyword == "སྙན་ངག":
-                structured_output_file = os.path.join(output_dir, f"{keyword}.json")
-                process_syllable_structure(filtered_data, structured_output_file)
-            else:
-
-                output_file_path = os.path.join(output_dir, f"{keyword}.json")
-                save_json(filtered_data, output_file_path)
-
-            classified_entries.extend(filtered_data)
-
-    # unclassified entries
-    unclassified_data = filter_unclassified_data(data, classified_entries)
-    if unclassified_data:
-        unclassified_file_path = os.path.join(output_dir, 'unclassified.json')
-        save_json(unclassified_data, unclassified_file_path)
-
-
 def process_syllable_structure(data, output_file):
     output_data = []
     for entry in data:
@@ -150,6 +110,58 @@ def process_syllable_structure(data, output_file):
     save_json(output_data, output_file)
 
 
+def process_json(input_json_path, keywords, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+    data = load_json(input_json_path)
+
+    data = remove_empty_text_entries(data)
+    classified_entries = []
+
+    keyword_config = {
+        "རྩོམ": {
+            "priority_keyword": "སྙན་ངག",
+            "additional_keywords": ["opinions", "Opinions", "བསམ་ཚུལ", "གཏམ་དཔེ", "སྣ་ཚོགས།", "ངོ་སྤྲོད།"]
+        },
+        "གསར་འགྱུར།": {
+            "additional_keywords": ["news", "News", "བོད་ནང་", "གོང་ས་མཆོག", "རྒྱ་ནག", "བཙན་བྱོལ།", "འཕྲིན་གསར", "རྒྱ་དཀར་ནག",  "འཛམ་གླིང་།", "འཛམ་གླིང༌།", "སྤྱི་ཚོགས།", "བརྒྱུད་ལམ་གཞན་གྱི་གསར་གནས།", "ཨ་རི།", "བོད།", "རྒྱལ་སྤྱི།" , "འགྲེམ་སྤེལ།"]
+        },
+        "མགུར་གླུ།": {
+            "additional_keywords": ["གླུ་གཞས།"]
+        },
+        "ཡིག་སྒྲེལ་": {
+            "additional_keywords": ["ངོས་སྦྱོར་"]
+        },
+        "བརྩམས་སྒྲུང": {
+            "additional_keywords": ["མཚར་གཏམ།"]
+        },
+    }
+
+    for keyword in keywords:
+        config = keyword_config.get(keyword, {})
+        filtered_data = filter_data_by_keyword(
+            data,
+            keyword,
+            additional_keywords=config.get("additional_keywords"),
+            priority_keyword=config.get("priority_keyword")
+        )
+
+        if filtered_data:
+            if keyword == "སྙན་ངག":
+                structured_output_file = os.path.join(output_dir, f"{keyword}.json")
+                process_syllable_structure(filtered_data, structured_output_file)
+            else:
+                output_file_path = os.path.join(output_dir, f"{keyword}.json")
+                save_json(filtered_data, output_file_path)
+
+            classified_entries.extend(filtered_data)
+
+    # Unclassified entries
+    unclassified_data = filter_unclassified_data(data, classified_entries)
+    if unclassified_data:
+        unclassified_file_path = os.path.join(output_dir, 'unclassified.json')
+        save_json(unclassified_data, unclassified_file_path)
+
+
 def main(input_json_path, output_dir):
     keywords = [
         "ཡིག་སྒྲེལ་",
@@ -161,6 +173,9 @@ def main(input_json_path, output_dir):
         "བརྩམས་སྒྲུང",
         "དྲ་ཐོག་གི་གཏམ་རྒྱུན།"
     ]
+
+    keywords = [normalize_text(keyword) for keyword in keywords]
+
     process_json(input_json_path, keywords, output_dir)
 
 
